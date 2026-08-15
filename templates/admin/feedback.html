@@ -1,0 +1,66 @@
+{% extends "admin/base.html" %}
+{% block title %}Feedback{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="page-title">Feedback</div>
+    <div class="page-subtitle">Sayt bo'yicha fikr-mulohazalar va sahifa sozlamalari</div>
+  </div>
+</div>
+
+<div class="card mb-1">
+  <div class="stat-label mb-1">feedback tugmasi — sahifalar bo'yicha</div>
+  <div class="row-list">
+    {% for p in page_settings %}
+      <div class="row-item">
+        <div class="row-title">{{ p.page_slug }}</div>
+        <form method="POST" action="{{ url_for('admin.feedback_page_toggle', page_slug=p.page_slug) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="enabled" value="{{ 0 if p.enabled else 1 }}">
+          <button type="submit" class="badge {{ 'badge-success' if p.enabled else 'badge-muted' }}">
+            {{ 'yoqilgan' if p.enabled else 'o\'chirilgan' }}
+          </button>
+        </form>
+      </div>
+    {% else %}
+      <div class="empty-state"><i class="ti ti-toggle-left" aria-hidden="true"></i>hozircha sahifa sozlamalari yo'q</div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="stat-label mb-1">kelgan feedback'lar</div>
+  <div class="row-list">
+    {% for it in items %}
+      <div class="row-item" style="align-items:flex-start;flex-direction:column;gap:8px;">
+        <div class="flex-between" style="width:100%;">
+          <div>
+            <span class="row-title">{{ it.name or 'Anonim' }}</span>
+            <span class="row-meta">· sahifa: {{ it.page_slug or '—' }} · {{ it.created_at[:16] if it.created_at else '' }}</span>
+            {% if it.status == 'new' %}<span class="badge badge-danger" style="margin-left:6px;">yangi</span>{% endif %}
+          </div>
+          <div class="row-actions">
+            {% if it.status == 'new' %}
+            <form method="POST" action="{{ url_for('admin.feedback_mark_seen', feedback_id=it.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-ghost btn-sm">ko'rildi</button>
+            </form>
+            {% endif %}
+            <form method="POST" action="{{ url_for('admin.feedback_delete', feedback_id=it.id) }}"
+                  onsubmit="return confirm('Ushbu feedback o\'chirilsinmi?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-danger btn-sm">✕</button>
+            </form>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--text-dim);white-space:pre-wrap;">{{ it.description }}</p>
+        {% if it.file_url %}
+          <a href="{{ it.file_url }}" target="_blank" class="btn btn-ghost btn-sm">📎 biriktirilgan fayl</a>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="empty-state"><i class="ti ti-message-2" aria-hidden="true"></i>hali feedback kelmagan</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

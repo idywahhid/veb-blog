@@ -1,0 +1,185 @@
+{% extends "admin/base.html" %}
+{% block title %}Maqolalar{% endblock %}
+{% block head %}
+<script src="{{ url_for('static', filename='js/ctx-menu.js') }}" defer></script>
+{% endblock %}
+{% block content %}
+<div class="list-header">
+  <span class="list-count">{{ total }} ta maqola</span>
+  <a href="{{ url_for('admin.article_new') }}" class="new-btn">
+    <i class="ti ti-plus" aria-hidden="true"></i>yangi maqola
+  </a>
+</div>
+
+<form method="GET" action="{{ url_for('admin.articles_list') }}" class="filter-bar">
+  <input type="text" name="q" value="{{ q }}" placeholder="sarlavha yoki matn bo'yicha qidirish...">
+  <select name="status">
+    <option value="" {% if not status %}selected{% endif %}>barchasi</option>
+    <option value="published" {% if status == 'published' %}selected{% endif %}>chop etilgan</option>
+    <option value="draft" {% if status == 'draft' %}selected{% endif %}>qoralama</option>
+  </select>
+  <button type="submit" class="btn">qidirish</button>
+  {% if q or status %}
+  <a href="{{ url_for('admin.articles_list') }}" class="filter-clear">tozalash</a>
+  {% endif %}
+</form>
+
+{% if articles %}
+<div id="articles-container">
+  {% for a in articles %}
+  <div class="article-row" data-slug="{{ a.slug }}" data-title="{{ a.title }}"
+       data-draft="{{ 'true' if a.is_draft else 'false' }}"
+       data-edit-url="{{ url_for('admin.article_edit', slug=a.slug) }}"
+       data-dup-url="{{ url_for('admin.article_duplicate', slug=a.slug) }}"
+       data-del-url="{{ url_for('admin.article_delete', slug=a.slug) }}"
+       oncontextmenu="return openRowMenu(event, this)">
+    {% if a.image %}
+      <img class="article-thumb" src="/static/uploads/{{ a.image }}" alt="">
+    {% else %}
+      <div class="article-thumb-placeholder"><i class="ti ti-photo" aria-hidden="true"></i></div>
+    {% endif %}
+
+    <div class="article-info">
+      <div class="article-title">
+        {{ a.title }}
+        {% if a.is_draft %}<span class="draft-badge">draft</span>{% endif %}
+      </div>
+      <div class="article-meta">
+        <span>{{ a.date }}</span>
+        {% if a.author %}<span>{{ a.author }}</span>{% endif %}
+        {% if a.location %}<span>{{ a.location }}</span>{% endif %}
+        <span>{{ a.views }} ko'rish</span>
+        <span>/{{ a.slug }}</span>
+      </div>
+    </div>
+
+    <div class="article-actions">
+      <a href="{{ url_for('admin.article_edit', slug=a.slug) }}" class="edit-btn">
+        <i class="ti ti-edit" aria-hidden="true"></i>tahrirlash
+      </a>
+      <button type="button" class="edit-btn" title="Nusxalash"
+              onclick="duplicateArticle('{{ url_for('admin.article_duplicate', slug=a.slug) }}')">
+        <i class="ti ti-copy" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="del-btn"
+              data-delete-url="{{ url_for('admin.article_delete', slug=a.slug) }}"
+              onclick="confirmDelete({{ a.title|tojson }}, this.dataset.deleteUrl)">
+        <i class="ti ti-trash" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if total_pages > 1 %}
+  <div class="pagination" style="justify-content:center">
+    {% if page > 1 %}
+      <a href="{{ url_for('admin.articles_list', page=page-1, q=q, status=status) }}">← oldingi</a>
+    {% endif %}
+    <span class="current">{{ page }} / {{ total_pages }}</span>
+    {% if page < total_pages %}
+      <a href="{{ url_for('admin.articles_list', page=page+1, q=q, status=status) }}">keyingi →</a>
+    {% endif %}
+  </div>
+{% endif %}
+{% else %}
+  <div class="empty-state">
+    <i class="ti ti-file-text" aria-hidden="true"></i>
+    <h3>Hali maqola yo'q</h3>
+    <p>Birinchi maqolangizni yozing.</p>
+    <a href="{{ url_for('admin.article_new') }}" class="new-btn mt-1" style="display:inline-flex;">yangi maqola</a>
+  </div>
+{% endif %}
+
+<div class="modal-overlay" id="del-modal">
+  <div class="modal">
+    <h3>Maqolani o'chirish</h3>
+    <p id="del-msg">Bu maqolani o'chirishni tasdiqlaysizmi?</p>
+    <div class="modal-btns">
+      <button type="button" class="btn-cancel" onclick="closeModal()">bekor</button>
+      <button type="button" class="btn-delete" onclick="submitDelete()">o'chirish</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function duplicateArticle(url) {
+  const f = document.createElement('form');
+  f.method = 'POST'; f.action = url;
+  const csrf = document.createElement('input');
+  csrf.type = 'hidden'; csrf.name = 'csrf_token'; csrf.value = '{{ csrf_token() }}';
+  f.appendChild(csrf);
+  document.body.appendChild(f);
+  f.submit();
+}
+function rowBulkAction(slug, action, tagName) {
+  const f = document.createElement('form');
+  f.method = 'POST'; f.action = "{{ url_for('admin.articles_bulk') }}";
+  const fields = { csrf_token: "{{ csrf_token() }}", action: action, slugs: slug };
+  if (tagName) fields.tag_name = tagName;
+  Object.entries(fields).forEach(([k, v]) => {
+    const inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = k; inp.value = v;
+    f.appendChild(inp);
+  });
+  document.body.appendChild(f);
+  f.submit();
+}
+function openRowMenu(ev, row) {
+  ev.preventDefault();
+  const slug = row.dataset.slug;
+  const title = row.dataset.title;
+  const isDraft = row.dataset.draft === 'true';
+  const items = [
+    {
+      label: isDraft ? 'Nashr qilish' : 'Qoralamaga o\'tkazish', key: 'P',
+      icon: '<i class="ti ti-star"></i>',
+      action: () => rowBulkAction(slug, isDraft ? 'publish' : 'draft')
+    },
+    { label: 'Tahrirlash', key: 'R', icon: '<i class="ti ti-edit"></i>', action: () => { window.location.href = row.dataset.editUrl; } },
+    { label: 'Nusxalash', key: 'C', icon: '<i class="ti ti-copy"></i>', action: () => duplicateArticle(row.dataset.dupUrl) },
+    { sep: true },
+    { label: 'O\'chirish', key: 'D', danger: true, icon: '<i class="ti ti-trash"></i>', action: () => confirmDelete(title, row.dataset.delUrl) }
+  ];
+  ctxMenu.show(ev.clientX, ev.clientY, items);
+  return false;
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+    e.preventDefault();
+    document.querySelector('.filter-bar input[name="q"]').focus();
+  }
+});
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
+    e.preventDefault();
+    window.location.href = "{{ url_for('admin.article_new') }}";
+  }
+});
+let _activeDeleteUrl = null;
+function confirmDelete(title, deleteUrl) {
+  _activeDeleteUrl = deleteUrl;
+  document.getElementById('del-msg').textContent = '"' + title + '" — bu amalni qaytarib bo\'lmaydi.';
+  document.getElementById('del-modal').classList.add('show');
+}
+function submitDelete() {
+  if (!_activeDeleteUrl) return;
+  const f = document.createElement('form');
+  f.method = 'POST'; f.action = _activeDeleteUrl;
+  const csrf = document.createElement('input');
+  csrf.type = 'hidden'; csrf.name = 'csrf_token'; csrf.value = '{{ csrf_token() }}';
+  f.appendChild(csrf);
+  document.body.appendChild(f);
+  f.submit();
+}
+function closeModal() {
+  document.getElementById('del-modal').classList.remove('show');
+  _activeDeleteUrl = null;
+}
+document.getElementById('del-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+</script>
+{% endblock %}

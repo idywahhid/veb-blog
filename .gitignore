@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+env/
+
+# Maxfiy ma'lumotlar
+.env
+
+# Ma'lumotlar bazasi
+*.db
+*.sqlite
+*.sqlite3
+
+# Yuklangan fayllar va zaxira nusxalar (papka strukturasi .gitkeep bilan saqlanadi)
+static/uploads/*
+!static/uploads/**/.gitkeep
+backups/*
+!backups/.gitkeep
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store

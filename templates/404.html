@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8">
+    <title>$ 404</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+    <div class="container d-flex justify-content-between align-items-center">
+        <a href="{{ url_for('home') }}" class="brand-link">
+            wahhid<span class="brand-cursor"></span>
+        </a>
+        <nav class="d-flex gap-4" id="mainNav">
+            <a href="{{ url_for('blog') }}" class="nav-link-custom">blog</a>
+            <a href="{{ url_for('about') }}" class="nav-link-custom">haqida</a>
+            <a href="{{ url_for('kontakt') }}" class="nav-link-custom">kontakt</a>
+        </nav>
+        <button class="nav-toggle" id="navToggle" aria-label="Menyuni ochish" aria-expanded="false" aria-controls="mainNav">
+            <span class="nav-toggle-bar"></span>
+        </button>
+    </div>
+</header>
+
+<main class="container d-flex align-items-center justify-content-center" style="min-height: 70vh;">
+    <div class="not-found-terminal">
+        <div><span class="t-prompt">$</span> cd <span style="color:#79c0ff;">{{ request.path }}</span></div>
+        <div class="t-err">bash: cd: {{ request.path }}: No such file or directory</div>
+        <br>
+        <div><span class="t-prompt">$</span> echo <span style="color:#79c0ff;">"404 — sahifa topilmadi"</span></div>
+        <div style="color:#aaa;">404 — sahifa topilmadi</div>
+        <br>
+        <div><span class="t-prompt">$</span> <span style="color:#aaa;"># orqaga qaytish uchun:</span></div>
+        <div>
+            <span class="t-prompt">$</span> 
+            <a href="{{ url_for('home') }}" style="color:#f0b429; text-decoration:none;">cd ~/home</a>
+            &nbsp;|&nbsp;
+            <a href="{{ url_for('blog') }}" style="color:#f0b429; text-decoration:none;">cd ~/blog</a>
+        </div>
+        <br>
+        <div style="display:flex; align-items:center; gap:6px;">
+            <span class="t-prompt">$</span>
+            <span style="display:inline-block; width:8px; height:15px; background:#3ef2a4; animation: blink 1.1s step-end infinite;"></span>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <small>© <span id="copyright-year">2026</span> M.M Wahhid</small>
+</footer>
+
+<script>
+    const startYear = 2026;
+    const currentYear = new Date().getFullYear();
+    document.getElementById('copyright-year').textContent =
+        currentYear > startYear ? `${startYear} – ${currentYear}` : startYear;
+</script>
+<script>
+(function () {
+    const btn = document.getElementById('navToggle');
+    const nav = document.getElementById('mainNav');
+    if (!btn || !nav) return;
+    btn.addEventListener('click', function () {
+        const open = nav.classList.toggle('nav-open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    nav.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', function () {
+            nav.classList.remove('nav-open');
+            btn.setAttribute('aria-expanded', 'false');
+        });
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8">
+    <title>{{ article.title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    {% if article.meta_description %}<meta name="description" content="{{ article.meta_description }}">{% endif %}
+    {% if article.meta_keywords %}<meta name="keywords" content="{{ article.meta_keywords }}">{% endif %}
+    <meta property="og:title" content="{{ article.title }}">
+    {% if article.meta_description %}<meta property="og:description" content="{{ article.meta_description }}">{% endif %}
+    {% if article.image %}<meta property="og:image" content="{{ url_for('static', filename='uploads/' + article.image, _external=True) }}">{% endif %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+
+        body {
+            background-color: #090c11;
+            background-image: none;
+        }
+
+        .art-header-zone {
+            background: linear-gradient(180deg, rgba(255,255,255,.03) 0%, transparent 100%);
+            padding-bottom: 0;
+        }
+
+        .art-wrap {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 0 15px 0;
+        }
+
+        .art-header {padding: 10px 0 10px;}
+
+        .art-breadcrumb {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--ink-muted);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .art-breadcrumb a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: opacity .15s;
+        }
+
+        .art-breadcrumb a:hover { opacity: .65; }
+        .art-breadcrumb .sep { color: var(--ink-ghost); }
+
+        .art-title {
+            font-size: clamp(26px, 4vw, 40px);
+            font-weight: 800;
+            letter-spacing: -.03em;
+            line-height: 1.18;
+            color: var(--ink);
+            margin-bottom: 14px;
+        }
+
+        .art-meta {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--ink-muted);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .art-meta-dot { color: var(--ink-ghost); }
+
+        .art-readtime {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--accent);
+            background: var(--accent-dim);
+            border: 1px solid rgba(62,242,164,.22);
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+
+        .art-header-rule {
+            border: none;
+            border-top: 1px solid var(--rule);
+            margin: 28px 0 36px;
+        }
+
+        .art-cover {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 36px;
+            display: block;
+        }
+
+        .art-cover-caption {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--ink-muted);
+            margin-top: -28px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .art-body {
+            font-size: 16.5px;
+            line-height: 1.9;
+            color: var(--ink-soft);
+            letter-spacing: -0.01em;
+        }
+
+        .art-body p { margin-bottom: 1.6em; }
+
+        .art-body h2 {
+            font-size: 21px;
+            font-weight: 700;
+            color: var(--ink);
+            letter-spacing: -.025em;
+            margin: 2.4em 0 .7em;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--rule);
+        }
+
+        .art-body h3 {
+            font-size: 17.5px;
+            font-weight: 700;
+            color: var(--ink);
+            margin: 2em 0 .6em;
+        }
+
+        .art-body strong { color: var(--ink); font-weight: 600; }
+        .art-body em { font-style: italic; color: var(--ink-soft); }
+
+        .art-body a {
+            color: var(--accent);
+            text-decoration: underline;
+            text-decoration-color: rgba(62,242,164,.35);
+            text-underline-offset: 3px;
+            transition: text-decoration-color .15s;
+        }
+
+        .art-body a:hover { text-decoration-color: var(--accent); }
+
+        .art-body blockquote {
+            border-left: 2px solid var(--ink-ghost);
+            margin: 2em 0;
+            padding: 2px 0 2px 20px;
+            color: var(--ink-soft);
+            font-style: italic;
+            font-size: 15.5px;
+        }
+
+        .art-body code {
+            font-family: var(--font-mono);
+            font-size: .855em;
+            background: rgba(255,255,255,.05);
+            border: 1px solid var(--rule);
+            border-radius: 3px;
+            padding: 1px 5px;
+            color: var(--accent);
+        }
+
+        .art-body pre {
+            background: #05070a;
+            border-radius: 8px;
+            padding: 20px 22px;
+            overflow-x: auto;
+            margin: 1.8em 0;
+            font-size: .865em;
+            border: 1px solid rgba(255,255,255,.08);
+        }
+
+        .art-body pre code {
+            background: none;
+            border: none;
+            padding: 0;
+            color: #ccc;
+            font-size: inherit;
+        }
+
+        .art-body ul, .art-body ol {
+            padding-left: 1.4em;
+            margin-bottom: 1.6em;
+        }
+
+        .art-body li {
+            margin-bottom: .5em;
+            line-height: 1.75;
+        }
+
+        .art-divider {
+            border: none;
+            border-top: 1px solid var(--rule);
+            margin: 52px 0 36px;
+        }
+
+        .art-tg {
+            background: rgba(255,255,255,.04);
+            border: 1px solid var(--rule);
+            border-radius: 8px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+
+        .art-tg-text {
+            font-size: 13.5px;
+            color: var(--ink-muted);
+            line-height: 1.6;
+        }
+
+        .art-tg-text a { color: var(--accent); text-decoration: none; }
+
+        .art-nav {
+            display: flex;
+            background: rgba(255,255,255,.03);
+            border-top: 1px solid var(--rule);
+            border-bottom: 1px solid var(--rule);
+        }
+
+        .art-nav a, .art-nav span {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 13px 18px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--ink-muted);
+            text-decoration: none;
+            flex: 1;
+            transition: background .14s, color .14s;
+            border-right: 1px solid var(--rule);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .art-nav a:last-child, .art-nav span:last-child { border-right: none; }
+
+        .art-nav a:hover {
+            background: rgba(255,255,255,.05);
+            color: var(--ink);
+        }
+
+        .read-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 2px;
+            background: var(--accent);
+            z-index: 9999;
+            transition: width .1s linear;
+        }
+
+        @media (max-width: 640px) {
+            .art-wrap { padding: 0 14px 64px; }
+            .art-header { padding: 32px 0 24px; }
+            .art-body { font-size: 15.5px; line-height: 1.85; }
+            .art-title { font-size: clamp(22px, 6vw, 30px); }
+            .art-nav a, .art-nav span { padding: 13px 8px; font-size: 11px; }
+        }
+    </style>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+</head>
+<body>
+
+<div class="read-progress" id="readProgress"></div>
+
+<!-- HEADER -->
+<header>
+    <div class="container d-flex justify-content-between align-items-center">
+        <a href="{{ url_for('home') }}" class="brand-link">
+            wahhid<span class="brand-cursor"></span>
+        </a>
+        <nav class="d-flex gap-4" id="mainNav">
+            <a href="{{ url_for('blog') }}" class="nav-link-custom">blog</a>
+            <a href="{{ url_for('about') }}" class="nav-link-custom">haqida</a>
+            <a href="{{ url_for('kontakt') }}" class="nav-link-custom">kontakt</a>
+        </nav>
+        <button class="nav-toggle" id="navToggle" aria-label="Menyuni ochish" aria-expanded="false" aria-controls="mainNav">
+            <span class="nav-toggle-bar"></span>
+        </button>
+    </div>
+</header>
+
+<!-- Sarlavha zonasi — iliq gradient fon -->
+<div class="art-header-zone">
+    <div class="container">
+        <div class="art-wrap">
+            <div class="art-header">
+
+                {% set month_names = {
+                    '01': 'Yanvar', '02': 'Fevral', '03': 'Mart', '04': 'Aprel',
+                    '05': 'May', '06': 'Iyun', '07': 'Iyul', '08': 'Avgust',
+                    '09': 'Sentyabr', '10': 'Oktyabr', '11': 'Noyabr', '12': 'Dekabr'} %}
+                {% set d = article.date %}
+                {% set m = d[5:7] if d else '' %}
+                {% set f_date = (d[8:10] + ' ' + (month_names[m] if m in month_names else '') + ', ' + d[:4]) if d and d|length >= 10 and m in month_names else "Noma'lum" %}
+
+                <!-- Breadcrumb -->
+                <div class="art-breadcrumb">
+                    <span style="color:var(--accent)">$</span>
+                    <a href="{{ url_for('blog') }}">~/blog</a>
+                    <span class="sep">/</span>
+                    <span>{{ article.slug if article.slug else 'maqola' }}</span>
+                </div>
+
+                <!-- Sarlavha -->
+                <h1 class="art-title">{{ article.title }}</h1>
+
+                <!-- Meta -->
+                <div class="art-meta">
+                    <span>{{ f_date }}</span>
+                    {% if article.location %}
+                    <span class="art-meta-dot">·</span>
+                    <span>{{ article.location }}</span>
+                    {% endif %}
+                    <span class="art-meta-dot">·</span>
+                    <span class="art-readtime"><i class="fa-regular fa-clock"></i> <span id="readTimeVal">~1 min</span></span>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<main class="container">
+    <div class="art-wrap">
+
+        <hr class="art-header-rule">
+
+        <!-- Rasm -->
+        {% if article.image %}
+        <img
+            src="{{ url_for('static', filename='uploads/' + article.image) }}"
+            alt="{{ article.title }}"
+            class="art-cover">
+        {% if article.img_desc %}
+        <p class="art-cover-caption">{{ article.img_desc }}</p>
+        {% endif %}
+        {% endif %}
+
+        <!-- Matn -->
+        <div class="art-body" id="artBody">
+            {{ article.content | safe }}
+        </div>
+
+        <hr class="art-divider">
+
+        <!-- Navigatsiya -->
+        <div class="art-nav">
+            {% if prev_article %}
+            <a href="{{ url_for('show_article', slug=prev_article.slug) }}" style="color:var(--accent)" title="{{ prev_article.title }}">&larr; {{ prev_article.title|truncate(28, True, '…') }}</a>
+            {% else %}
+            <span></span>
+            {% endif %}
+            <a href="{{ url_for('blog') }}" style="color:var(--accent)">~/blog</a>
+            {% if next_article %}
+            <a href="{{ url_for('show_article', slug=next_article.slug) }}" style="color:var(--accent)" title="{{ next_article.title }}">{{ next_article.title|truncate(28, True, '…') }} &rarr;</a>
+            {% else %}
+            <span></span>
+            {% endif %}
+        </div>
+
+    </div>
+</main>
+
+<!-- FOOTER -->
+<footer>
+    <small>© <span id="copyright-year">2026</span> Barcha huquqlar himoyalangan</small>
+</footer>
+
+<script>
+    // Copyright yil
+    const startYear = 2026;
+    const cy = new Date().getFullYear();
+    document.getElementById('copyright-year').textContent =
+        cy > startYear ? `${startYear} – ${cy}` : startYear;
+
+    // Bo'sh paragraflarni tozalash
+    document.querySelectorAll('.art-body p').forEach(p => {
+        if (p.innerHTML.trim() === '<br>' || p.innerHTML.trim() === '') p.remove();
+    });
+
+    // O'qish vaqtini hisoblash (so'z soni bo'yicha)
+    const body = document.getElementById('artBody');
+    if (body) {
+        const words = body.innerText.trim().split(/\s+/).length;
+        const mins = Math.max(1, Math.round(words / 200));
+        document.getElementById('readTimeVal').textContent = `~${mins} min`;
+    }
+
+    // O'qish jarayoni — yuqoridagi yashil chiziq
+    const bar = document.getElementById('readProgress');
+    if (bar) {
+        window.addEventListener('scroll', () => {
+            const total = document.documentElement.scrollHeight - window.innerHeight;
+            const pct = total > 0 ? (window.scrollY / total) * 100 : 0;
+            bar.style.width = pct + '%';
+        }, { passive: true });
+    }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+{% include '_feedback_widget.html' %}
+<script>
+(function () {
+    const btn = document.getElementById('navToggle');
+    const nav = document.getElementById('mainNav');
+    if (!btn || !nav) return;
+    btn.addEventListener('click', function () {
+        const open = nav.classList.toggle('nav-open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    nav.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', function () {
+            nav.classList.remove('nav-open');
+            btn.setAttribute('aria-expanded', 'false');
+        });
+    });
+})();
+</script>
+</body>
+</html>

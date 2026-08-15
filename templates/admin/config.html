@@ -1,0 +1,116 @@
+{% extends "admin/base.html" %}
+{% block title %}Konfiguratsiya{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="page-title">Sozlamalar</div>
+    <div class="page-subtitle">Xavfsizlik, bildirishnoma va zaxira nusxa</div>
+  </div>
+</div>
+
+<div class="card mb-1">
+  <div class="stat-label mb-1">bo'limlar</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <a href="#security" class="btn btn-ghost btn-sm"><i class="ti ti-shield-check" aria-hidden="true"></i>xavfsizlik</a>
+    <a href="#email" class="btn btn-ghost btn-sm"><i class="ti ti-mail" aria-hidden="true"></i>gmail / bildirishnoma</a>
+    <a href="#backup" class="btn btn-ghost btn-sm"><i class="ti ti-database-export" aria-hidden="true"></i>zaxira nusxa</a>
+    <a href="#errors" class="btn btn-ghost btn-sm"><i class="ti ti-alert-triangle" aria-hidden="true"></i>404 statistikasi</a>
+  </div>
+</div>
+
+<div class="config-section" id="security">
+  <h3>parolni yangilash</h3>
+  <form method="POST" action="{{ url_for('admin.config_password_update') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="config-form-row">
+      <label>Joriy parol</label>
+      <input type="password" name="current_password" required>
+    </div>
+    <div class="config-form-row">
+      <label>Yangi parol (kamida 8 belgi)</label>
+      <input type="password" name="new_password" minlength="8" required>
+    </div>
+    <div class="config-form-row">
+      <label>Yangi parolni tasdiqlash</label>
+      <input type="password" name="confirm_password" minlength="8" required>
+    </div>
+    <button type="submit" class="config-submit">parolni yangilash</button>
+  </form>
+</div>
+
+<div class="config-section" id="email">
+  <h3>gmail va bildirishnoma sozlamalari</h3>
+  <form method="POST" action="{{ url_for('admin.config_email_update') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="config-form-row">
+      <label>Gmail manzil</label>
+      <input type="email" name="smtp_email" value="{{ smtp.email }}" placeholder="sizning@gmail.com">
+    </div>
+    <div class="config-form-row">
+      <label>Gmail App-parol (16 belgili)</label>
+      <input type="password" name="smtp_app_password" placeholder="{{ '••••••••••••••••' if smtp.app_password else 'app-parolni kiriting' }}">
+    </div>
+    <div class="config-checkbox-row">
+      <input type="checkbox" id="smtp_enabled" name="smtp_enabled" {% if smtp.enabled %}checked{% endif %}>
+      <label for="smtp_enabled">Yangi xabar kelganda email bildirishnoma yuborish</label>
+    </div>
+    <button type="submit" class="config-submit">saqlash</button>
+  </form>
+  <form method="POST" action="{{ url_for('admin.config_email_test') }}" style="margin-top:10px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="config-submit" style="background:transparent;color:var(--accent);">test xabar yuborish</button>
+  </form>
+</div>
+
+<div class="config-section" id="backup">
+  <h3>zaxira nusxa</h3>
+  <form method="POST" action="{{ url_for('admin.backup_create') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="config-submit">+ yangi zaxira yaratish</button>
+  </form>
+
+  <div class="backup-list">
+    {% for b in backups %}
+      <div class="backup-row">
+        <span>{{ b.name }} — {{ b.size_kb }} KB — {{ b.created }}</span>
+        <div class="backup-row-actions">
+          <a href="{{ url_for('admin.backup_download', filename=b.name) }}" class="btn btn-ghost btn-sm">yuklab olish</a>
+          <form method="POST" action="{{ url_for('admin.backup_restore', filename=b.name) }}"
+                onsubmit="return confirm('Diqqat: joriy ma\'lumotlar shu zaxira bilan almashtiriladi. Davom etilsinmi?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-ghost btn-sm">tiklash</button>
+          </form>
+          <form method="POST" action="{{ url_for('admin.backup_delete', filename=b.name) }}"
+                onsubmit="return confirm('Zaxira o\'chirilsinmi?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger btn-sm">✕</button>
+          </form>
+        </div>
+      </div>
+    {% else %}
+      <span class="empty-state" style="padding:14px 0;">hali zaxira yo'q</span>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="config-section" id="errors">
+  <h3>404 statistikasi — buzilgan havolalar</h3>
+  <div class="row-list">
+    {% for e in error_stats %}
+      <div class="row-item">
+        <code style="font-size:12px;">{{ e.path }}</code>
+        <span class="row-meta">{{ e.cnt }} marta, oxirgi: {{ e.last_seen[:16] if e.last_seen else '' }}</span>
+      </div>
+    {% else %}
+      <span class="empty-state" style="padding:14px 0;">hozircha 404 xato qayd etilmagan</span>
+    {% endfor %}
+  </div>
+  {% if error_stats %}
+  <form method="POST" action="{{ url_for('admin.errors_clear') }}" style="margin-top:12px;"
+        onsubmit="return confirm('Barcha 404 statistikasi tozalansinmi?')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-danger btn-sm">statistikani tozalash</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

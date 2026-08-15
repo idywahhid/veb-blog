@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8">
+    <title>Kontakt</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        /* Terminal form */
+        .terminal-form {
+            background: #0a0d12;
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: var(--r-md);
+            padding: 0;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: #ccc;
+            box-shadow: var(--sh-md), 0 0 46px -18px rgba(62,242,164,.35);
+            overflow: hidden;
+        }
+
+        /* Yuqori bar — macOS tugmachalari */
+        .tf-topbar {
+            background: #1a1a1a;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        .tf-dot { width: 11px; height: 11px; border-radius: 50%; }
+        .tf-dot.red   { background: #ff5f57; }
+        .tf-dot.yel   { background: #febc2e; }
+        .tf-dot.grn   { background: #28c840; }
+        .tf-title {
+            flex: 1;
+            text-align: center;
+            font-size: 11px;
+            color: #555;
+            letter-spacing: .03em;
+        }
+
+        /* Terminal body */
+        .tf-body {
+            padding: 20px 24px 24px;
+            line-height: 2;
+        }
+
+        /* Har bir maydon — terminal satr ko'rinishida */
+        .tf-field {
+            margin-bottom: 6px;
+        }
+
+        .tf-prompt-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 2px;
+        }
+
+        .tf-prompt-sym { color: #3ef2a4; user-select: none; }
+        .tf-label-cmd  { color: #e8e8e8; }
+        .tf-label-hint { color: #555; font-size: 12px; }
+        .tf-counter    { margin-left: auto; font-size: 11px; color: #3ef2a4; }
+
+        /* Input va textarea styling */
+        .tf-input, .tf-textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #2a2a2a;
+            color: #79c0ff;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            padding: 4px 0 6px 20px;
+            outline: none;
+            resize: none;
+            transition: border-color .18s;
+            caret-color: #3ef2a4;
+        }
+
+        .tf-input::placeholder, .tf-textarea::placeholder {
+            color: #333;
+        }
+
+        .tf-input:focus, .tf-textarea:focus {
+            border-bottom-color: #3ef2a4;
+        }
+
+        /* Submit tugmasi — terminal buyruq ko'rinishida */
+        .tf-submit-line {
+            margin-top: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tf-submit-btn {
+            background: none;
+            border: 1px solid #3ef2a4;
+            color: #3ef2a4;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 22px;
+            border-radius: var(--r-sm);
+            cursor: pointer;
+            transition: all .18s;
+            letter-spacing: .03em;
+        }
+
+        .tf-submit-btn:hover {
+            background: #3ef2a4;
+            color: #05150d;
+        }
+
+        .tf-cursor-blink {
+            display: inline-block;
+            width: 8px; height: 14px;
+            background: #3ef2a4;
+            vertical-align: middle;
+            animation: blink 1.1s step-end infinite;
+        }
+
+        /* O'ng tomon ijtimoiy linklar */
+        .tf-social-link {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #1e1e1e;
+            text-decoration: none;
+            transition: all .18s;
+            cursor: pointer;
+        }
+
+        .tf-social-link:last-child { border-bottom: none; }
+
+        .tf-social-link:hover { padding-left: 6px; }
+        .tf-social-link:hover .tf-social-arrow { color: #3ef2a4; opacity: 1; }
+        .tf-social-link:hover > div > div:first-child { color: #3ef2a4 !important; }
+
+        .tf-social-arrow {
+            margin-left: auto;
+            color: #333;
+            font-size: 11px;
+            opacity: 0;
+            transition: all .18s;
+        }
+
+        /* Rate limit xabar */
+        .rate-limit-toast {
+            position: fixed;
+            top: 20px; left: 20px;
+            z-index: 9999;
+            background: var(--bg-card);
+            border: 1px solid var(--ink);
+            border-left: 4px solid #f0b429;
+            border-radius: var(--r-sm);
+            padding: 14px 18px;
+            max-width: 340px;
+            box-shadow: var(--sh-md);
+            font-size: 13px;
+            font-family: var(--font-mono);
+            color: var(--ink);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        /* Mobilda header/logo bilan qoplanmasligi uchun pastga tushiramiz */
+        @media (max-width: 640px) {
+            .rate-limit-toast {
+                top: auto;
+                bottom: 20px;
+                left: 12px;
+                right: 12px;
+                max-width: none;
+            }
+        }
+    </style>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <script src="{{ url_for('static', filename='js/ratelimit.js') }}"></script>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+    <div class="container d-flex justify-content-between align-items-center">
+        <a href="{{ url_for('home') }}" class="brand-link">
+            wahhid<span class="brand-cursor"></span>
+        </a>
+        <nav class="d-flex gap-4" id="mainNav">
+            <a href="{{ url_for('blog') }}" class="nav-link-custom">blog</a>
+            <a href="{{ url_for('about') }}" class="nav-link-custom">haqida</a>
+        </nav>
+        <button class="nav-toggle" id="navToggle" aria-label="Menyuni ochish" aria-expanded="false" aria-controls="mainNav">
+            <span class="nav-toggle-bar"></span>
+        </button>
+    </div>
+</header>
+
+<!-- Rate limit xabar -->
+<div class="rate-limit-toast" id="rate-limit-toast" style="{{ '' if rate_limit_error else 'display:none;' }}">
+    <i class="fas fa-clock" style="margin-top:2px; color:#f0b429;"></i>
+    <span id="rate-limit-toast-text">{{ rate_limit_error or '' }}</span>
+</div>
+
+<main class="container py-2">
+
+    <!-- Sahifa boshi -->
+    <div class="mb-5" style="max-width: 700px;">
+        <p class="page-eyebrow">~/kontakt</p>
+        <h1 class="page-heading">Aloqa</h1>
+        <p class="page-sub">Savol, taklif yoki fikringiz bormi? Murojaat qiling.</p>
+    </div>
+
+    <div class="row g-4" style="max-width: 1200px;">
+
+        <!-- CHAP: Terminal form -->
+        <div class="col-lg-7">
+            <div class="terminal-form">
+
+                <!-- TopBar -->
+                <div class="tf-topbar">
+                    <span class="tf-dot red"></span>
+                    <span class="tf-dot yel"></span>
+                    <span class="tf-dot grn"></span>
+                    <span class="tf-title">wahhid@blog ~ xabar-yuborish</span>
+                </div>
+
+                <!-- Form body -->
+                <div class="tf-body">
+                    <form action="{{ url_for('kontakt') }}" method="POST" id="kontakt-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <!-- Ism -->
+                        <div class="tf-field">
+                            <div class="tf-prompt-line">
+                                <span class="tf-prompt-sym">$</span>
+                                <span class="tf-label-cmd">ismingiz</span>
+                                <span class="tf-label-hint"># Sizga qanday murojaat qilish mumkin?</span>
+                                <span id="name-count" class="tf-counter">0/50</span>
+                            </div>
+                            <input
+                                type="text"
+                                id="name-input"
+                                name="name"
+                                class="tf-input"
+                                placeholder="ismingiz..."
+                                maxlength="50"
+                                autocomplete="off"
+                                required>
+                        </div>
+
+                        <!-- Aloqa -->
+                        <div class="tf-field">
+                            <div class="tf-prompt-line">
+                                <span class="tf-prompt-sym">$</span>
+                                <span class="tf-label-cmd">qayta aloqa uchun tarmog'ingiz</span>
+                                <span class="tf-label-hint"># o'zingizga qulayini yozing</span>
+                                <span id="username-count" class="tf-counter">0/100</span>
+                            </div>
+                            <input
+                                type="text"
+                                id="username-input"
+                                name="username"
+                                class="tf-input"
+                                placeholder="@username yoki email..."
+                                maxlength="100"
+                                autocomplete="off"
+                                required>
+                        </div>
+
+                        <!-- Xabar -->
+                        <div class="tf-field">
+                            <div class="tf-prompt-line">
+                                <span class="tf-prompt-sym">$</span>
+                                <span class="tf-label-cmd">murajaat xabaringiz</span>
+                                <span class="tf-label-hint"># nima haqida suhbat olib bormoqchisiz?</span>
+                                <span id="message-count" class="tf-counter">0/999</span>
+                            </div>
+                            <textarea
+                                name="message"
+                                id="message-text"
+                                class="tf-textarea"
+                                rows="8"
+                                placeholder="yozmoqchi bo'lgan narsangiz..."
+                                maxlength="999"
+                                required></textarea>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="tf-submit-line">
+                            <span class="tf-prompt-sym">$</span>
+                            <button type="submit" class="tf-submit-btn">
+                                send --to wahhid
+                            </button>
+                            <span class="tf-cursor-blink"></span>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- O'NG: Terminal uslubida -->
+        <div class="col-lg-5 d-flex flex-column gap-3">
+
+            <!-- To'g'ridan-to'g'ri — terminal card -->
+            <div class="terminal-form">
+                <div class="tf-topbar">
+                    <span class="tf-dot red"></span>
+                    <span class="tf-dot yel"></span>
+                    <span class="tf-dot grn"></span>
+                    <span class="tf-title">wahhid@blog ~ aloqa-kanallar</span>
+                </div>
+                <div class="tf-body" style="line-height: 1.6;">
+
+                    <div style="margin-bottom:16px;">
+                        <span class="tf-prompt-sym">$</span>
+                        <span style="color:#e8e8e8; margin-left:8px;">ls ~/aloqa</span>
+                    </div>
+
+                    {% if contact_email %}
+                    <a href="mailto:{{ contact_email }}" class="tf-social-link">
+                        <span class="tf-prompt-sym">→</span>
+                        <div style="margin-left:10px;">
+                            <div style="color:#e8e8e8; font-size:13px;">E-pochta</div>
+                            <div style="color:#555; font-size:11px;">{{ contact_email }}</div>
+                        </div>
+                        <i class="fas fa-arrow-right tf-social-arrow"></i>
+                    </a>
+                    {% endif %}
+
+                    {% if contact_telegram %}
+                    <a href="{{ contact_telegram }}" target="_blank" class="tf-social-link">
+                        <span class="tf-prompt-sym">→</span>
+                        <div style="margin-left:10px;">
+                            <div style="color:#e8e8e8; font-size:13px;">Telegram</div>
+                            <div style="color:#555; font-size:11px;">{{ contact_telegram }}</div>
+                        </div>
+                        <i class="fas fa-arrow-right tf-social-arrow"></i>
+                    </a>
+                    {% endif %}
+
+                    {% if contact_linkedin %}
+                    <a href="{{ contact_linkedin }}" target="_blank" class="tf-social-link">
+                        <span class="tf-prompt-sym">→</span>
+                        <div style="margin-left:10px;">
+                            <div style="color:#e8e8e8; font-size:13px;">LinkedIn</div>
+                            <div style="color:#555; font-size:11px;">{{ contact_linkedin }}</div>
+                        </div>
+                        <i class="fas fa-arrow-right tf-social-arrow"></i>
+                    </a>
+                    {% endif %}
+
+                    {% if contact_github %}
+                    <a href="{{ contact_github }}" target="_blank" class="tf-social-link">
+                        <span class="tf-prompt-sym">→</span>
+                        <div style="margin-left:10px;">
+                            <div style="color:#e8e8e8; font-size:13px;">GitHub</div>
+                            <div style="color:#555; font-size:11px;">{{ contact_github }}</div>
+                        </div>
+                        <i class="fas fa-arrow-right tf-social-arrow"></i>
+                    </a>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            {% if telegram_channel %}
+            <!-- O'buna — terminal card -->
+            <div class="terminal-form">
+                <div class="tf-topbar">
+                    <span class="tf-dot red"></span>
+                    <span class="tf-dot yel"></span>
+                    <span class="tf-dot grn"></span>
+                    <span class="tf-title">wahhid@blog ~ obuna</span>
+                </div>
+                <div class="tf-body" style="line-height:1.6;">
+                    <div style="margin-bottom:15px;">
+                        <span class="tf-prompt-sym">$</span>
+                        <span style="color:#e8e8e8; margin-left:8px;">cat obuna.md</span>
+                    </div>
+                    <p style="color:#aaa; font-size:13px; margin-bottom:20px; padding-left:4px;">
+                        Texnik dunyoda, <a href="{{ telegram_channel }}" target="_blank" style="color:#f0b429; text-decoration:none;">{{ telegram_channel }}</a> texnik bo'lmagan narsalar haqida yozaman.
+                    </p>
+                    <div class="tf-submit-line">
+                        <span class="tf-prompt-sym">$</span>
+                        <a href="{{ telegram_channel }}" target="_blank" class="tf-submit-btn" style="text-decoration:none; display:inline-block;">
+                            <i class="fab fa-telegram-plane me-1"></i> qo'shilish
+                        </a>
+                        <span class="tf-cursor-blink"></span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</main>
+
+<footer>
+    <small>© <span id="copyright-year">2026</span> M.M Wahhid</small>
+</footer>
+
+<script>
+    // Yil
+    const startYear = 2026;
+    const currentYear = new Date().getFullYear();
+    document.getElementById('copyright-year').textContent =
+        currentYear > startYear ? `${startYear} – ${currentYear}` : startYear;
+
+    // Belgi hisoblagich — yashildan qizilga
+    function updateCounter(input, counter, max) {
+        const len = input.value.length;
+        counter.textContent = `${len}/${max}`;
+        const hue = (1 - len / max) * 120;
+        counter.style.color = `hsl(${hue}, 85%, 60%)`;
+        if (len >= max) {
+            input.style.borderBottomColor = '#c0392b';
+        } else {
+            input.style.borderBottomColor = '';
+        }
+    }
+
+    document.getElementById('name-input').addEventListener('input', function() {
+        updateCounter(this, document.getElementById('name-count'), 50);
+    });
+    document.getElementById('username-input').addEventListener('input', function() {
+        updateCounter(this, document.getElementById('username-count'), 100);
+    });
+    document.getElementById('message-text').addEventListener('input', function() {
+        updateCounter(this, document.getElementById('message-count'), 999);
+    });
+
+    // ── Gmail compose orqali yuborish (serverga saqlanmaydi) ──
+    var kfForm      = document.getElementById('kontakt-form');
+    var toastEl     = document.getElementById('rate-limit-toast');
+    var toastText   = document.getElementById('rate-limit-toast-text');
+    var GMAIL_TO    = {{ contact_email | tojson }};
+
+    function showToast(text) {
+        toastText.textContent = text;
+        toastEl.style.display = 'flex';
+    }
+    function hideToast() {
+        toastEl.style.display = 'none';
+    }
+
+    kfForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        hideToast();
+
+        var name    = document.getElementById('name-input').value.trim();
+        var contact = document.getElementById('username-input').value.trim();
+        var message = document.getElementById('message-text').value.trim();
+
+        if (!name || !contact || !message) {
+            showToast("Barcha maydonlarni to'ldiring.");
+            return;
+        }
+        if (!GMAIL_TO) {
+            showToast('Email manzil sozlanmagan.');
+            return;
+        }
+
+        var subject = 'Sayt orqali murojaat: ' + name;
+        var body    = 'Ism: ' + name + '\n'
+                     + "Qayta aloqa: " + contact + '\n\n'
+                     + message;
+
+        var url = 'https://mail.google.com/mail/?view=cm&fs=1'
+                + '&to=' + encodeURIComponent(GMAIL_TO)
+                + '&su=' + encodeURIComponent(subject)
+                + '&body=' + encodeURIComponent(body);
+
+        window.open(url, '_blank', 'noopener');
+    });
+</script>
+{% include '_feedback_widget.html' %}
+<script>
+(function () {
+    const btn = document.getElementById('navToggle');
+    const nav = document.getElementById('mainNav');
+    if (!btn || !nav) return;
+    btn.addEventListener('click', function () {
+        const open = nav.classList.toggle('nav-open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    nav.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', function () {
+            nav.classList.remove('nav-open');
+            btn.setAttribute('aria-expanded', 'false');
+        });
+    });
+})();
+</script>
+</body>
+</html>

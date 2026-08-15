@@ -1,0 +1,79 @@
+{% extends "admin/base.html" %}
+{% block title %}Galereya{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="page-title">Galereya</div>
+    <div class="page-subtitle">{{ total }} ta rasm</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+    <form method="GET" action="{{ url_for('admin.gallery') }}" class="filter-bar" style="margin:0;">
+      <input type="text" name="q" value="{{ q }}" placeholder="fayl nomi bo'yicha qidirish...">
+      <select name="album" onchange="this.form.submit()">
+        <option value="">barcha albomlar</option>
+        <option value="none" {% if selected_album == 'none' %}selected{% endif %}>albomsiz</option>
+        {% for a in albums %}
+          <option value="{{ a.id }}" {% if selected_album == a.id|string %}selected{% endif %}>{{ a.name }} ({{ a.image_count }})</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn btn-sm">qidirish</button>
+    </form>
+    <form method="POST" action="{{ url_for('admin.album_add') }}" style="display:flex;gap:6px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="text" name="name" placeholder="yangi albom nomi..." style="width:140px;">
+      <button type="submit" class="btn btn-sm">+ albom</button>
+    </form>
+    {% if orphan_count > 0 %}
+      <form method="POST" action="{{ url_for('admin.gallery_cleanup') }}"
+            onsubmit="return confirm('{{ orphan_count }} ta ishlatilmayotgan rasm o\'chirilsinmi?')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-sm btn-danger">{{ orphan_count }} ta ortiqcha rasmni tozalash</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if files %}
+  <div class="gallery-grid">
+    {% for f in files %}
+      <div class="gallery-item">
+        <img class="gallery-thumb" src="{{ f.url }}" alt="{{ f.name }}" loading="lazy">
+        <div class="gallery-meta">
+          <span class="gallery-size">
+            {{ f.size_kb }} KB
+            {% if not f.in_use %}<span style="color:var(--red);">· ishlatilmayapti</span>{% endif %}
+          </span>
+          <form method="POST" action="{{ url_for('admin.gallery_delete', filename=f.name) }}"
+                onsubmit="return confirm('Bu rasm o\'chirilsinmi?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if f.in_use %}<input type="hidden" name="force" value="1">{% endif %}
+            <button type="submit" class="del-btn">✕</button>
+          </form>
+        </div>
+        <form method="POST" action="{{ url_for('admin.gallery_set_album', filename=f.name) }}" style="margin-top:4px;padding:0 10px 8px;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <select name="album_id" onchange="this.form.submit()" style="font-size:10px;width:100%;">
+            <option value="">— albomsiz —</option>
+            {% for a in albums %}
+              <option value="{{ a.id }}" {% if f.album and f.album.id == a.id %}selected{% endif %}>{{ a.name }}</option>
+            {% endfor %}
+          </select>
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+  {% if total_pages > 1 %}
+    <div class="pagination" style="justify-content:center;margin-top:16px;">
+      {% if page > 1 %}
+        <a href="{{ url_for('admin.gallery', page=page-1, q=q) }}">← oldingi</a>
+      {% endif %}
+      <span class="current">{{ page }} / {{ total_pages }}</span>
+      {% if page < total_pages %}
+        <a href="{{ url_for('admin.gallery', page=page+1, q=q) }}">keyingi →</a>
+      {% endif %}
+    </div>
+  {% endif %}
+{% else %}
+  <div class="empty-state"><i class="ti ti-photo" aria-hidden="true"></i>hali rasm yuklanmagan</div>
+{% endif %}
+{% endblock %}

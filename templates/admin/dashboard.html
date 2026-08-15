@@ -1,0 +1,76 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+{% set draft_count = articles|selectattr('is_draft')|list|length %}
+{% set published_count = articles|length - draft_count %}
+
+<div class="page-head">
+  <div>
+    <div class="page-title">Xush kelibsiz, {{ (profile.display_name if profile is defined else None) or username }}</div>
+    <div class="page-subtitle">Sayt holati bir qarashda</div>
+  </div>
+  <a href="{{ url_for('admin.article_new') }}" class="btn btn-primary">
+    <i class="ti ti-plus" aria-hidden="true"></i>yangi maqola
+  </a>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-label">jami maqola</div>
+    <div class="stat-value">{{ articles|length }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">nashr etilgan</div>
+    <div class="stat-value accent">{{ published_count }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">qoralama</div>
+    <div class="stat-value warn">{{ draft_count }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">jami ko'rish</div>
+    <div class="stat-value">{{ total_views }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">yangi feedback</div>
+    <div class="stat-value {{ 'danger' if new_feedback > 0 else '' }}">{{ new_feedback }}</div>
+  </div>
+</div>
+
+<div class="card mb-1">
+  <div class="flex-between mb-1">
+    <span class="stat-label">so'nggi maqolalar</span>
+    <a href="{{ url_for('admin.articles_list') }}" class="btn btn-ghost btn-sm">barchasi</a>
+  </div>
+  <div class="row-list">
+    {% for a in articles[:5] %}
+      <div class="row-item">
+        <div>
+          <div class="row-title">{{ a.title }}</div>
+          <div class="row-meta">{{ a.date }} · {{ a.views }} ko'rish{% if a.is_draft %} · qoralama{% endif %}</div>
+        </div>
+        <div class="row-actions">
+          {% if a.is_draft %}<span class="badge badge-warn">qoralama</span>{% else %}<span class="badge badge-success">nashr</span>{% endif %}
+          <a href="{{ url_for('admin.article_edit', slug=a.slug) }}" class="btn btn-ghost btn-sm">tahrirlash</a>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty-state"><i class="ti ti-file-text" aria-hidden="true"></i>hali maqola yo'q</div>
+    {% endfor %}
+  </div>
+</div>
+
+{% if top_articles %}
+<div class="card">
+  <div class="stat-label mb-1">eng ko'p o'qilgan maqolalar</div>
+  <div class="row-list">
+    {% for a in top_articles %}
+      <div class="row-item">
+        <a href="{{ url_for('admin.article_edit', slug=a.slug) }}" class="row-title">{{ a.title }}</a>
+        <span class="row-meta">{{ a.views }} ko'rish</span>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8">
+    <title>Haqida</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+    <div class="container d-flex justify-content-between align-items-center">
+        <a href="{{ url_for('home') }}" class="brand-link">
+            wahhid<span class="brand-cursor"></span>
+        </a>
+        <nav class="d-flex gap-4" id="mainNav">
+            <a href="{{ url_for('blog') }}" class="nav-link-custom">blog</a>
+            <a href="{{ url_for('kontakt') }}" class="nav-link-custom">kontakt</a>
+        </nav>
+        <button class="nav-toggle" id="navToggle" aria-label="Menyuni ochish" aria-expanded="false" aria-controls="mainNav">
+            <span class="nav-toggle-bar"></span>
+        </button>
+    </div>
+</header>
+
+<main class="container py-5">
+    <div class="article-layout">
+
+        <!-- Yo'l -->
+        <p class="page-eyebrow">~/haqida</p>
+
+        <!-- Sarlavha -->
+        <h1 class="article-main-title" style="margin-bottom: 24px;">Men Muhammadamin.</h1>
+
+        <!-- Iqtibos -->
+        <div class="about-quote">
+            "Men texnik dunyoda, texnik bo'lmagan narsalar haqida yozaman."
+        </div>
+
+        <!-- Asosiy matn -->
+        <div class="article-body-content">
+            <p>Bu loyiha qandaydir tijoriy platforma yoki jamoaviy portal emas. Bu shunchaki mening shaxsiy onlayn kundaligim. Bu yerda hayotiy xulosalar, o'qigan kitoblarimdan parchalar, dunyoqarashni o'zgartirgan fikrlar va texnologiyadan tashqaridagi hayot haqida yozib boraman.</p>
+
+            <h2>Bu yerda nimalarni topishingiz mumkin?</h2>
+
+            <p><strong>Shaxsiy fikrlar.</strong> Hayot, odamlar va atrofimizdagi voqeliklar haqida subyektiv tahlillar.</p>
+            <p><strong>Saralangan iqtiboslar.</strong> Men yozmagan, lekin meni o'ylantirgan buyuk fikrlar jamlanmasi.</p>
+            <p><strong>Oddiy suhbatlar.</strong> Murakkab terminlarsiz, xuddi bir finjon kofe ustida gaplashgandek samimiy matnlar.</p>
+
+            <p>Agar sizga shunchaki hayotiy tajribalar va fikrlar almashish qiziq bo'lsa, to'g'ri joyga kelibsiz.</p>
+        </div>
+
+        <!-- CTA qatori -->
+        <div class="d-flex gap-3 flex-wrap mt-4 pt-2" style="border-top: 1px solid var(--rule);">
+            <a href="{{ url_for('kontakt') }}" class="btn btn-ink">
+                <i class="fas fa-terminal me-2"></i>Bog'lanish
+            </a>
+            <a href="{{ url_for('blog') }}" class="btn btn-ghost">
+                <i class="fas fa-book-open me-2"></i>Blogni o'qish
+            </a>
+        </div>
+
+    </div>
+</main>
+
+<!-- FOOTER -->
+<footer>
+    <small>© <span id="copyright-year">2026</span> Barcha huquqlar himoyalangan</small>
+</footer>
+
+<script>
+    const startYear = 2026;
+    const currentYear = new Date().getFullYear();
+    document.getElementById('copyright-year').textContent =
+        currentYear > startYear ? `${startYear} – ${currentYear}` : startYear;
+</script>
+{% include '_feedback_widget.html' %}
+<script>
+(function () {
+    const btn = document.getElementById('navToggle');
+    const nav = document.getElementById('mainNav');
+    if (!btn || !nav) return;
+    btn.addEventListener('click', function () {
+        const open = nav.classList.toggle('nav-open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    nav.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', function () {
+            nav.classList.remove('nav-open');
+            btn.setAttribute('aria-expanded', 'false');
+        });
+    });
+})();
+</script>
+</body>
+</html>

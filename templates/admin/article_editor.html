@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <title>{{ "Tahrirlash" if article else "Yangi maqola" }} — Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="#">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+</head>
+<body>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="{{ url_for('admin.articles_list') }}" class="back-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        Maqolalar
+      </a>
+      <span class="save-status" id="save-status"></span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="edit-btn" id="preview-btn" type="button" onclick="previewArticle()">
+        <i class="ti ti-eye" aria-hidden="true"></i>preview
+      </button>
+      <button class="new-btn" id="publish-btn" onclick="publishArticle()">
+        <i class="ti ti-rocket" aria-hidden="true"></i>nashr qilish
+      </button>
+    </div>
+  </div>
+
+  <!-- Preview form (yashirin, yangi oynada ochiladi) -->
+  <form id="preview-form" method="post" action="{{ url_for('admin.article_preview') }}" target="_blank">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="title"   id="pf-title">
+    <input type="hidden" name="content" id="pf-content">
+    <input type="hidden" name="date"    id="pf-date">
+    <input type="hidden" name="author"  id="pf-author" value="{{ article.author if article else '' }}">
+    <input type="hidden" name="location" id="pf-location" value="{{ article.location if article else '' }}">
+    <input type="hidden" name="img_desc" id="pf-img-desc" value="{{ article.img_desc if article else '' }}">
+    <input type="hidden" name="existing_image" value="{{ article.image if article else '' }}">
+  </form>
+
+  <!-- Editor -->
+  <div class="editor-wrap">
+
+    <textarea
+      id="title-input"
+      placeholder="Title"
+      rows="1"
+      maxlength="200"
+    >{{ article.title if article else '' }}</textarea>
+
+    <!-- Block menu (kod + rasm) -->
+    <div class="block-menu" id="block-menu">
+      <button class="block-btn" onclick="insertCode()" title="Kod bloki">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+        </svg>
+        kod
+      </button>
+      <button class="block-btn" onclick="triggerImageUpload()" title="Rasm qo'shish">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+        rasm
+      </button>
+    </div>
+
+    <div
+      id="editor"
+      contenteditable="true"
+      data-placeholder="Your story..."
+      spellcheck="false"
+    ></div>
+
+    <!-- Rasm upload (yashirin) -->
+    <input type="file" id="img-upload" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
+
+  </div>
+
+  <!-- Floating toolbar -->
+  <div id="toolbar">
+    <button onclick="fmt('bold')"        title="Bold">      <b>B</b></button>
+    <button onclick="fmt('italic')"      title="Italic">    <i>i</i></button>
+    <button onclick="insertLink()"       title="Link">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+      </svg>
+    </button>
+    <div class="tb-sep"></div>
+    <button onclick="insertHeading(2)"   title="H2">        <span style="font-size:14px;font-weight:700;">T</span></button>
+    <button onclick="insertHeading(3)"   title="H3">        <span style="font-size:11px;font-weight:700;">T</span></button>
+    <div class="tb-sep"></div>
+    <button onclick="fmt('blockquote')"  title="Blockquote">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/>
+        <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Hidden publish form -->
+  <form id="publish-form" method="post"
+        action="{{ url_for('admin.article_save', slug=article.slug) if article else url_for('admin.article_new') }}"
+        enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="title"   id="f-title">
+    <input type="hidden" name="content" id="f-content">
+    <input type="hidden" name="date"    id="f-date">
+    <input type="hidden" name="images"  id="f-images" value="[]">
+    <input type="hidden" name="meta_description" id="f-meta-description">
+    <input type="hidden" name="meta_keywords"     id="f-meta-keywords">
+    <input type="hidden" name="publish_at"        id="f-publish-at">
+  </form>
+
+<script>
+// ── Title auto-resize ─────────────────────────────────────────────────────────
+const titleEl = document.getElementById('title-input');
+function resizeTitle() {
+  titleEl.style.height = 'auto';
+  titleEl.style.height = titleEl.scrollHeight + 'px';
+}
+titleEl.addEventListener('input', resizeTitle);
+resizeTitle();
+
+// ── Editor — mavjud content yuklash ──────────────────────────────────────────
+const editor = document.getElementById('editor');
+{% if article and article.content %}
+editor.innerHTML = {{ article.content | tojson }};
+{% endif %}
+
+// ── Block menu ko'rsatish/yashirish ──────────────────────────────────────────
+const blockMenu = document.getElementById('block-menu');
+
+editor.addEventListener('keyup', updateBlockMenu);
+editor.addEventListener('click', updateBlockMenu);
+
+function updateBlockMenu() {
+  const sel = window.getSelection();
+  if (!sel || !sel.isCollapsed) { blockMenu.classList.remove('visible'); return; }
+  // Kursor bo'sh qatorda bo'lsa
+  const node = sel.anchorNode;
+  const text = node ? (node.textContent || '') : '';
+  if (text.trim() === '') {
+    blockMenu.classList.add('visible');
+  } else {
+    blockMenu.classList.remove('visible');
+  }
+}
+
+// ── Floating toolbar ──────────────────────────────────────────────────────────
+const toolbar = document.getElementById('toolbar');
+
+document.addEventListener('selectionchange', () => {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+    toolbar.style.display = 'none';
+    return;
+  }
+  // Editor ichida?
+  const range = sel.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) {
+    toolbar.style.display = 'none';
+    return;
+  }
+  // Pozitsiya hisoblash
+  const rect = range.getBoundingClientRect();
+  toolbar.style.display  = 'flex';
+  toolbar.style.left     = Math.max(8, rect.left + rect.width/2 - toolbar.offsetWidth/2) + 'px';
+  toolbar.style.top      = (rect.top - 52 + window.scrollY) + 'px';
+});
+
+// Toolbar tashqarisini bosish
+document.addEventListener('mousedown', e => {
+  if (!toolbar.contains(e.target)) toolbar.style.display = 'none';
+});
+
+// ── Formatlash ────────────────────────────────────────────────────────────────
+function fmt(cmd) {
+  if (cmd === 'blockquote') {
+    document.execCommand('formatBlock', false, 'blockquote');
+  } else {
+    document.execCommand(cmd, false, null);
+  }
+  editor.focus();
+  toolbar.style.display = 'none';
+}
+
+function insertHeading(level) {
+  document.execCommand('formatBlock', false, `h${level}`);
+  editor.focus();
+  toolbar.style.display = 'none';
+}
+
+function insertLink() {
+  const url = prompt('URL kiriting:');
+  if (url) document.execCommand('createLink', false, url);
+  toolbar.style.display = 'none';
+}
+
+// ── Kod bloki ─────────────────────────────────────────────────────────────────
+function insertCode() {
+  const pre = document.createElement('pre');
+  pre.textContent = '// kod shu yerga...';
+  pre.contentEditable = 'true';
+
+  const sel = window.getSelection();
+  if (sel && !sel.isCollapsed) {
+    sel.getRangeAt(0).deleteContents();
+  }
+  const range = sel ? sel.getRangeAt(0) : null;
+  if (range) {
+    range.insertNode(pre);
+    // Kursorni ichiga o'tkazish
+    const r = document.createRange();
+    r.setStart(pre, 0); r.collapse(true);
+    sel.removeAllRanges(); sel.addRange(r);
+  } else {
+    editor.appendChild(pre);
+  }
+  blockMenu.classList.remove('visible');
+
+  // Pre ichida Tab = 2 bo'shliq
+  pre.addEventListener('keydown', e => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      document.execCommand('insertText', false, '  ');
+    }
+    // Esc — predan chiqish
+    if (e.key === 'Escape') {
+      const p = document.createElement('p');
+      p.innerHTML = '<br>';
+      pre.after(p);
+      const r = document.createRange();
+      r.setStart(p, 0); r.collapse(true);
+      const s = window.getSelection();
+      s.removeAllRanges(); s.addRange(r);
+      p.focus();
+    }
+  });
+}
+
+// ── Rasm upload ───────────────────────────────────────────────────────────────
+function triggerImageUpload() {
+  document.getElementById('img-upload').click();
+  blockMenu.classList.remove('visible');
+}
+
+const uploadedImages = [];
+
+async function handleImageUpload(input) {
+  if (!input.files.length) return;
+  const file = input.files[0];
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('csrf_token', '{{ csrf_token() }}');
+
+  setStatus('saving', 'Rasm yuklanmoqda…');
+
+  try {
+    const resp = await fetch('{{ url_for("admin.upload_image") }}', {
+      method: 'POST', body: formData
+    });
+    const data = await resp.json();
+
+    if (data.ok) {
+      const img = document.createElement('img');
+      img.src = data.url;
+      img.alt = '';
+
+      // Kursorga qo'yish
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount) {
+        const range = sel.getRangeAt(0);
+        range.insertNode(img);
+        range.collapse(false);
+      } else {
+        editor.appendChild(img);
+      }
+      uploadedImages.push(data.url);
+      document.getElementById('f-images').value = JSON.stringify(uploadedImages);
+      setStatus('saved', 'Rasm qo\'shildi');
+    } else {
+      setStatus('error', data.error || 'Xato');
+    }
+  } catch(e) {
+    setStatus('error', 'Yuklashda xato');
+  }
+  input.value = '';
+}
+
+// ── Publish ───────────────────────────────────────────────────────────────────
+function publishArticle() {
+  const title = titleEl.value.trim();
+  if (!title) { showFlash('Sarlavha kiriting!', true); return; }
+
+  const content = editor.innerHTML.trim();
+  if (!content || content === '<br>') { showFlash('Kontent kiriting!', true); return; }
+
+  document.getElementById('f-title').value   = title;
+  document.getElementById('f-content').value = content;
+  {% if article %}
+  document.getElementById('f-date').value = {{ article.date | tojson }};
+  {% else %}
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  {% endif %}
+
+  document.getElementById('publish-btn').disabled = true;
+  document.getElementById('publish-form').submit();
+}
+
+// ── Preview ────────────────────────────────────────────────────────────────────
+function previewArticle() {
+  const title = titleEl.value.trim();
+  const content = editor.innerHTML.trim();
+  document.getElementById('pf-title').value   = title || '(sarlavhasiz)';
+  document.getElementById('pf-content').value = content;
+  {% if article %}
+  document.getElementById('pf-date').value = {{ article.date | tojson }};
+  {% else %}
+  document.getElementById('pf-date').value = new Date().toISOString().split('T')[0];
+  {% endif %}
+  document.getElementById('preview-form').submit();
+}
+
+// ── Klaviatura qisqa yo'llari ────────────────────────────────────────────────
+document.addEventListener('keydown', function(e) {
+  const key = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && key === 's') {
+    e.preventDefault();
+    publishArticle();
+  } else if ((e.ctrlKey || e.metaKey) && key === 'n') {
+    e.preventDefault();
+    window.location.href = "{{ url_for('admin.article_new') }}";
+  }
+});
+
+// ── Status / flash ────────────────────────────────────────────────────────────
+function setStatus(type, text) {
+  const el = document.getElementById('save-status');
+  el.textContent = text;
+  el.className = 'save-status ' + type;
+}
+
+function showFlash(msg, isError=false) {
+  const el = document.createElement('div');
+  el.className = 'flash-bar' + (isError ? ' error' : '');
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ── Enter behavior ────────────────────────────────────────────────────────────
+editor.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    // H2/H3/blockquote dan keyin normal paragraf
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    const block = sel.anchorNode.parentElement?.closest('h2,h3,blockquote');
+    if (block) {
+      e.preventDefault();
+      const p = document.createElement('p');
+      p.innerHTML = '<br>';
+      block.after(p);
+      const r = document.createRange();
+      r.setStart(p, 0); r.collapse(true);
+      sel.removeAllRanges(); sel.addRange(r);
+    }
+  }
+});
+
+// Paste — faqat matn, HTML emas
+editor.addEventListener('paste', e => {
+  e.preventDefault();
+  const text = e.clipboardData.getData('text/plain');
+  document.execCommand('insertText', false, text);
+});
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    showFlash({{ msg | tojson }}, {{ 'true' if cat == 'danger' else 'false' }});
+  {% endfor %}
+{% endwith %}
+
+// ── Autosave (qoralamani tasodifan yo'qotmaslik uchun) ───────────────────────
+const AUTOSAVE_SLUG_KEY = {{ (article.slug if article else 'new') | tojson }};
+let _autosaveTimer = null;
+
+async function doAutosave() {
+  const title   = titleEl.value.trim();
+  const content = editor.innerHTML.trim();
+  if (!title && (!content || content === '<br>')) return;
+
+  const formData = new FormData();
+  formData.append('slug_key', AUTOSAVE_SLUG_KEY);
+  formData.append('title', title);
+  formData.append('content', content);
+  formData.append('csrf_token', '{{ csrf_token() }}');
+
+  try {
+    const resp = await fetch('{{ url_for("admin.article_autosave") }}', { method: 'POST', body: formData });
+    const data = await resp.json();
+    if (data.ok) setStatus('saved', 'Qoralama saqlandi · ' + data.saved_at);
+  } catch (e) { /* jim */ }
+}
+
+_autosaveTimer = setInterval(doAutosave, 30000);
+editor.addEventListener('input', () => setStatus('saving', 'Tahrirlanmoqda…'));
+titleEl.addEventListener('input', () => setStatus('saving', 'Tahrirlanmoqda…'));
+
+{% if autosave and autosave.updated_at %}
+(function() {
+  const restore = confirm(
+    'Saqlanmagan qoralama topildi ({{ autosave.updated_at }}). Uni tiklashni xohlaysizmi?'
+  );
+  if (restore) {
+    titleEl.value = {{ autosave.title | tojson }};
+    resizeTitle();
+    editor.innerHTML = {{ autosave.content | tojson }};
+    setStatus('saved', 'Qoralama tiklandi');
+  }
+})();
+{% endif %}
+</script>
+</body>
+</html>

@@ -1,0 +1,446 @@
+<script src="{{ url_for('static', filename='js/ratelimit.js') }}"></script>
+{% if feedback_enabled %}
+<!-- ══ FEEDBACK WIDGET ══ -->
+<button id="fb-open-btn" type="button" aria-label="Xatolik topdingizmi?">
+  <span class="t-prompt">$</span> feedback?
+</button>
+
+<div id="fb-guide-backdrop">
+  <div id="fb-guide-modal" role="dialog" aria-modal="true" aria-labelledby="fb-guide-title">
+    <div id="fb-guide-titlebar">
+      <span class="fb-dot fb-dot-red" id="fb-guide-close-btn" title="Yopish"></span>
+      <span class="fb-dot fb-dot-yellow" title="Faol emas"></span>
+      <span class="fb-dot fb-dot-green" title="Faol emas"></span>
+      <span id="fb-guide-title">feedback</span>
+    </div>
+
+    <div id="fb-guide-body">
+      <p class="fb-guide-prompt"><span class="t-prompt">$</span> qo'llanma</p>
+
+      <p>Platformani yaxshilashga hissa qo'shing. Fikr-mulohaza yuborish tartibi:</p>
+
+      <ol id="fb-guide-steps">
+        <li><b>Muammoni tavsiflang:</b> Nima noto'g'ri ishlayapti?</li>
+        <li><b>Fayl ilova qiling:</b> Zarur bo'lsa, skrinshot yuklang.</li>
+        <li><b>Yuborish:</b> Tugmani bosing.</li>
+      </ol>
+
+      <p id="fb-guide-note">
+        <b>Eslatma:</b> Spamning oldini olish uchun har bir foydalanuvchiga soatiga 1 ta xabar yuborish imkoni beriladi.
+      </p>
+
+      <label id="fb-guide-checkbox-row">
+        <input type="checkbox" id="fb-guide-skip"> Keyingi safar ko'rsatma
+      </label>
+
+      <button type="button" id="fb-guide-continue-btn">&gt; davom etish</button>
+    </div>
+  </div>
+</div>
+
+<div id="fb-backdrop">
+  <div id="fb-modal" role="dialog" aria-modal="true" aria-labelledby="fb-title">
+    <div id="fb-titlebar">
+      <span class="fb-dot fb-dot-red" id="fb-close-btn" title="Yopish"></span>
+      <span class="fb-dot fb-dot-yellow" title="Faol emas"></span>
+      <span class="fb-dot fb-dot-green" title="Faol emas"></span>
+      <span id="fb-title">feedback — terminal</span>
+    </div>
+
+    <div id="fb-body">
+      <form id="fb-form" autocomplete="off">
+        <input type="text" name="website" id="fb-honeypot" tabindex="-1" autocomplete="off">
+
+        <label class="fb-label">Ism <span class="fb-optional">(Ixtiyori)</span> <span id="fb-name-counter">0/50</span></label>
+        <input type="text" id="fb-name" name="name" maxlength="50" placeholder="Anonim">
+
+        <label class="fb-label">
+          <span style="color: red;">*</span> Texnik muammo tavsifi <span id="fb-counter">0/999</span>
+        </label>
+        <textarea id="fb-description" name="description" maxlength="999" rows="7"placeholder="batafsil yozing..." required></textarea>
+
+        <label class="fb-label">
+          Fayl ilova qilish <span class="fb-optional">(5MB .png .jpg .jpeg .gif .webp .pdf)</span>
+        </label>
+
+        <div id="fb-dropzone">
+          <span id="fb-dropzone-text">faylni shu yerga tashlang yoki ustiga bosing</span>
+          <input type="file" id="fb-file" name="attachment" accept=".png,.jpg,.jpeg,.gif,.webp,.pdf">
+        </div>    
+        
+        <div id="fb-error"></div>
+
+        <button type="submit" id="fb-submit-btn">$ yuborish</button>
+      </form>
+
+      <div id="fb-thanks">
+        <div id="fb-thanks-icon">✓</div>
+        <p><b>Yordamingiz uchun rahmat!<br>tez orada muammoni hal qilamiz</b></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<canvas id="fb-confetti-canvas"></canvas>
+
+<style>
+#fb-open-btn .t-prompt,
+#fb-guide-modal .t-prompt,
+#fb-modal .t-prompt { color: #bfe0ff; }
+
+#fb-honeypot {
+  position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none;
+}
+
+#fb-open-btn {
+  position: fixed; bottom: 22px; right: 22px; z-index: 9998;
+  background: rgba(62,242,164,.35); color: #fff; border: 1px solid rgba(255,255,255,.4);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-radius: 999px; padding: 10px 18px; font-size: 13px;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace); cursor: pointer;
+  box-shadow: 0 6px 22px rgba(20,30,50,.25), inset 0 1px 0 rgba(255,255,255,.4);
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+#fb-open-btn:hover { transform: translateY(-2px); background: rgba(62,242,164,.5); box-shadow: 0 8px 26px rgba(20,30,50,.35), inset 0 1px 0 rgba(255,255,255,.4); }
+
+#fb-backdrop, #fb-guide-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 9999;
+  background: rgba(15,17,24,.4); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  align-items: center; justify-content: center;
+}
+#fb-backdrop.fb-open, #fb-guide-backdrop.fb-open { display: flex; }
+
+#fb-guide-modal {
+  width: min(460px, 92vw); max-height: 86vh; overflow-y: auto;
+  background: rgba(255,255,255,.14); color: #fff; border-radius: 22px;
+  border: 1px solid rgba(255,255,255,.35);
+  backdrop-filter: blur(26px) saturate(160%); -webkit-backdrop-filter: blur(26px) saturate(160%);
+  box-shadow: 0 20px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.4);
+  font-family: var(--font-sans, 'Inter', sans-serif);
+  transform: scale(.92); opacity: 0; transition: transform .18s ease, opacity .18s ease;
+}
+#fb-guide-backdrop.fb-open #fb-guide-modal { transform: scale(1); opacity: 1; }
+
+#fb-guide-titlebar {
+  display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+  background: rgba(255,255,255,.08); border-bottom: 1px solid rgba(255,255,255,.2);
+  border-radius: 22px 22px 0 0; font-size: 12px; color: rgba(255,255,255,.7);
+}
+#fb-guide-title { margin-left: 6px; }
+
+#fb-guide-body { padding: 22px; font-size: 13.5px; line-height: 1.65; color: rgba(255,255,255,.85); }
+.fb-guide-prompt { color: #fff; font-weight: 700; margin: 0 0 12px; }
+#fb-guide-body p { margin: 0 0 12px; }
+#fb-guide-steps { margin: 0 0 14px; padding-left: 20px; }
+#fb-guide-steps li { margin-bottom: 6px; }
+#fb-guide-note { color: #bfe0ff; }
+#fb-guide-note b { color: #bfe0ff; }
+
+#fb-guide-checkbox-row {
+  display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,.7);
+  margin: 4px 0 16px; cursor: pointer;
+}
+#fb-guide-checkbox-row input { cursor: pointer; }
+
+#fb-guide-continue-btn {
+  width: 100%; background: rgba(62,242,164,.45); color: #fff;
+  border: 1px solid rgba(255,255,255,.3); border-radius: 14px; padding: 13px; font-family: inherit;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  font-weight: 700; font-size: 13.5px; cursor: pointer; transition: background .15s ease, transform .15s ease;
+  box-shadow: 0 6px 20px rgba(31,90,200,.35), inset 0 1px 0 rgba(255,255,255,.4);
+}
+#fb-guide-continue-btn:hover { background: rgba(62,242,164,.6); transform: translateY(-1px); }
+
+#fb-modal {
+  width: min(460px, 92vw); max-height: 86vh; overflow-y: auto;
+  background: rgba(255,255,255,.14); color: #fff; border-radius: 22px;
+  border: 1px solid rgba(255,255,255,.35);
+  backdrop-filter: blur(26px) saturate(160%); -webkit-backdrop-filter: blur(26px) saturate(160%);
+  box-shadow: 0 20px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.4);
+  font-family: var(--font-sans, 'Inter', sans-serif);
+  transform: scale(.92); opacity: 0; transition: transform .18s ease, opacity .18s ease;
+}
+#fb-backdrop.fb-open #fb-modal { transform: scale(1); opacity: 1; }
+
+#fb-titlebar {
+  display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+  background: rgba(255,255,255,.08); border-bottom: 1px solid rgba(255,255,255,.2);
+  border-radius: 22px 22px 0 0; font-size: 12px; color: rgba(255,255,255,.7);
+}
+.fb-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+.fb-dot-red { background: #ff6b6b; cursor: pointer; }
+.fb-dot-yellow { background: #ffc861; }
+.fb-dot-green { background: #6be08a; }
+#fb-title { margin-left: 6px; }
+
+#fb-body { padding: 22px; }
+
+.fb-label {
+  display: block; font-size: 12px; color: rgba(255,255,255,.7); margin: 14px 0 7px;
+}
+.fb-label:first-child { margin-top: 0; }
+.fb-optional { color: rgba(255,255,255,.45); font-size: 11px; }
+#fb-counter, #fb-name-counter { color: rgba(255,255,255,.45); font-size: 11px; float: right; }
+
+#fb-name, #fb-description {
+  width: 100%; background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.3);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-radius: 14px; padding: 11px 13px; font-family: inherit; font-size: 14px;
+  box-sizing: border-box; resize: none; outline: none;
+  transition: border-color .18s ease, background .18s ease;
+}
+#fb-name::placeholder, #fb-description::placeholder { color: rgba(255,255,255,.5); }
+#fb-name:focus, #fb-description:focus { border-color: rgba(255,255,255,.7); background: rgba(255,255,255,.16); }
+
+#fb-dropzone {
+  position: relative; border: 1px dashed rgba(255,255,255,.4); border-radius: 14px;
+  background: rgba(255,255,255,.06);
+  padding: 16px; text-align: center; font-size: 12px; color: rgba(255,255,255,.6);
+  transition: border-color .15s ease, background .15s ease;
+}
+#fb-dropzone.fb-dragover { border-color: #bfe0ff; background: rgba(62,242,164,.15); }
+#fb-dropzone input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+
+#fb-error { color: #ff9b9b; font-size: 12px; margin-top: 10px; min-height: 14px; }
+
+#fb-submit-btn {
+  width: 100%; margin-top: 16px; background: rgba(62,242,164,.5); color: #fff;
+  border: 1px solid rgba(255,255,255,.35); border-radius: 14px; padding: 12px; font-family: inherit;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  font-weight: 700; font-size: 14px; cursor: pointer; transition: background .15s ease, transform .15s ease;
+  box-shadow: 0 6px 20px rgba(31,90,200,.35), inset 0 1px 0 rgba(255,255,255,.4);
+}
+#fb-submit-btn:hover { background: rgba(62,242,164,.65); transform: translateY(-1px); }
+#fb-submit-btn:disabled { opacity: .5; cursor: default; transform: none; }
+
+#fb-thanks { display: none; text-align: center; padding: 34px 10px; }
+#fb-thanks.fb-show { display: block; }
+#fb-thanks-icon {
+  width: 54px; height: 54px; border-radius: 50%; background: rgba(31,157,85,.5); color: #fff;
+  border: 1px solid rgba(255,255,255,.4); backdrop-filter: blur(8px);
+  font-size: 26px; line-height: 54px; margin: 0 auto 14px; font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4);
+}
+#fb-thanks p { font-size: 14px; color: rgba(255,255,255,.85); line-height: 1.6; }
+
+#fb-confetti-canvas {
+  position: fixed; inset: 0; z-index: 10000; pointer-events: none; display: none;
+}
+</style>
+
+<script>  
+(function () {
+  var openBtn   = document.getElementById('fb-open-btn');
+  var backdrop  = document.getElementById('fb-backdrop');
+  var closeBtn  = document.getElementById('fb-close-btn');
+  var guideBackdrop    = document.getElementById('fb-guide-backdrop');
+  var guideCloseBtn    = document.getElementById('fb-guide-close-btn');
+  var guideContinueBtn = document.getElementById('fb-guide-continue-btn');
+  var guideSkipCb      = document.getElementById('fb-guide-skip');
+  var FB_SKIP_KEY = 'fb_skip_guide';
+  var form      = document.getElementById('fb-form');
+  var nameEl        = document.getElementById('fb-name');
+  var nameCounterEl = document.getElementById('fb-name-counter');
+  var descEl    = document.getElementById('fb-description');
+  var counterEl = document.getElementById('fb-counter');
+  var dropzone  = document.getElementById('fb-dropzone');
+  var dzText    = document.getElementById('fb-dropzone-text');
+  var fileInput = document.getElementById('fb-file');
+  var errorEl   = document.getElementById('fb-error');
+  var submitBtn = document.getElementById('fb-submit-btn');
+  var thanksEl  = document.getElementById('fb-thanks');
+  var pageSlug  = "{{ feedback_page_slug }}";
+
+  function openModal() {
+    backdrop.classList.add('fb-open');
+    form.style.display = 'block';
+    thanksEl.classList.remove('fb-show');
+    errorEl.textContent = '';
+    if (window.WHRateLimit && WHRateLimit.isLocked()) {
+      errorEl.textContent = "Juda ko'p urinish. Qayta urinish uchun: " + WHRateLimit.formatTime(WHRateLimit.remainingMs());
+    }
+  }
+  function closeModal() { backdrop.classList.remove('fb-open'); }
+
+  function openGuideModal() { guideBackdrop.classList.add('fb-open'); }
+  function closeGuideModal() { guideBackdrop.classList.remove('fb-open'); }
+
+  function shouldSkipGuide() {
+    try { return localStorage.getItem(FB_SKIP_KEY) === '1'; }
+    catch (e) { return false; }
+  }
+
+  openBtn.addEventListener('click', function () {
+    if (shouldSkipGuide()) {
+      openModal();
+    } else {
+      openGuideModal();
+    }
+  });
+  guideCloseBtn.addEventListener('click', closeGuideModal);
+  guideBackdrop.addEventListener('click', function (e) { if (e.target === guideBackdrop) closeGuideModal(); });
+  guideContinueBtn.addEventListener('click', function () {
+    if (guideSkipCb.checked) {
+      try { localStorage.setItem(FB_SKIP_KEY, '1'); } catch (e) {}
+    }
+    closeGuideModal();
+    openModal();
+  });
+
+  closeBtn.addEventListener('click', closeModal);
+  backdrop.addEventListener('click', function (e) { if (e.target === backdrop) closeModal(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { closeModal(); closeGuideModal(); }
+  });
+
+  descEl.addEventListener('input', function () {
+    counterEl.textContent = descEl.value.length + '/999';
+    updateFbCounterColor(counterEl, descEl.value.length, 999);
+  });
+
+  nameEl.addEventListener('input', function () {
+    var len = nameEl.value.length;
+    nameCounterEl.textContent = len + '/50';
+    updateFbCounterColor(nameCounterEl, len, 50);
+  });
+
+  function updateFbCounterColor(counter, len, max) {
+    var hue = (1 - Math.min(len, max) / max) * 120;
+    counter.style.color = len > 0 ? 'hsl(' + hue + ', 70%, 62%)' : 'rgba(255,255,255,.45)';
+  }
+
+  ['dragenter', 'dragover'].forEach(function (evt) {
+    dropzone.addEventListener(evt, function (e) {
+      e.preventDefault(); dropzone.classList.add('fb-dragover');
+    });
+  });
+  ['dragleave', 'drop'].forEach(function (evt) {
+    dropzone.addEventListener(evt, function (e) {
+      e.preventDefault(); dropzone.classList.remove('fb-dragover');
+    });
+  });
+  dropzone.addEventListener('drop', function (e) {
+    if (e.dataTransfer.files.length) {
+      fileInput.files = e.dataTransfer.files;
+      updateDzText();
+    }
+  });
+  fileInput.addEventListener('change', updateDzText);
+  function updateDzText() {
+    if (fileInput.files.length) {
+      var f = fileInput.files[0];
+      dzText.textContent = f.name + ' (' + (f.size / 1024 / 1024).toFixed(2) + ' MB)';
+    } else {
+      dzText.textContent = 'faylni shu yerga tashlang yoki ustiga bosing';
+    }
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    errorEl.textContent = '';
+
+    if (window.WHRateLimit && WHRateLimit.isLocked()) {
+      errorEl.textContent = "Juda ko'p urinish. Qayta urinish uchun: " + WHRateLimit.formatTime(WHRateLimit.remainingMs());
+      return;
+    }
+
+    var desc = descEl.value.trim();
+    if (desc.length < 10) {
+      errorEl.textContent = 'Tavsif kamida 10 belgidan iborat bo\'lishi kerak.';
+      return;
+    }
+    if (fileInput.files.length && fileInput.files[0].size > 5 * 1024 * 1024) {
+      errorEl.textContent = 'Fayl hajmi 5MB dan oshmasligi kerak.';
+      return;
+    }
+
+    var fd = new FormData(form);
+    fd.set('page_slug', pageSlug);
+    var fbCsrfMeta = document.querySelector('meta[name="csrf-token"]');
+    fd.set('csrf_token', fbCsrfMeta ? fbCsrfMeta.content : '');
+    submitBtn.disabled = true;
+    submitBtn.textContent = '$ yuborilmoqda...';
+
+    fetch("{{ url_for('feedback_submit') }}", { method: 'POST', body: fd })
+      .then(function (r) { return r.json().then(function (data) { return { status: r.status, data: data }; }); })
+      .then(function (res) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '$ yuborish';
+        if (res.data.ok) {
+          if (window.WHRateLimit) WHRateLimit.recordAttempt();
+          form.reset();
+          counterEl.textContent = '0/999';
+          counterEl.style.color = 'rgba(255,255,255,.45)';
+          nameCounterEl.textContent = '0/50';
+          nameCounterEl.style.color = 'rgba(255,255,255,.45)';
+          dzText.textContent = 'faylni shu yerga tashlang yoki ustiga bosing';
+          form.style.display = 'none';
+          thanksEl.classList.add('fb-show');
+          fireConfetti();
+          setTimeout(closeModal, 2600);
+        } else {
+          if (res.status === 429 && window.WHRateLimit) WHRateLimit.forceLock();
+          errorEl.textContent = res.data.error || 'Xatolik yuz berdi, qayta urinib ko\'ring.';
+        }
+      })
+      .catch(function () {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '$ yuborish';
+        errorEl.textContent = 'Tarmoq xatosi, qayta urinib ko\'ring.';
+      });
+  });
+
+  // ── Konfetti (canvas, kutubxonasiz) ─────────────────────────────────────────
+  function fireConfetti() {
+    var canvas = document.getElementById('fb-confetti-canvas');
+    var ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    canvas.style.display = 'block';
+
+    var colors = ['#ff5f56', '#ffbd2e', '#27c93f', '#4a9eff', '#c77dff'];
+    var pieces = [];
+    for (var i = 0; i < 140; i++) {
+      pieces.push({
+        x: canvas.width / 2 + (Math.random() - 0.5) * 60,
+        y: canvas.height / 2 + (Math.random() - 0.5) * 60,
+        vx: (Math.random() - 0.5) * 12,
+        vy: Math.random() * -12 - 4,
+        size: Math.random() * 7 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rot: Math.random() * 360,
+        vrot: (Math.random() - 0.5) * 16,
+        gravity: 0.35 + Math.random() * 0.15,
+      });
+    }
+
+    var start = null;
+    function frame(ts) {
+      if (!start) start = ts;
+      var elapsed = ts - start;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      pieces.forEach(function (p) {
+        p.vy += p.gravity;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vrot;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rot * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        ctx.restore();
+      });
+      if (elapsed < 10200) {
+        requestAnimationFrame(frame);
+      } else {
+        canvas.style.display = 'none';
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+})();
+</script>
+{% endif %}

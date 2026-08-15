@@ -1,0 +1,46 @@
+{# active: 'dashboard' | 'articles' | 'feedback' | 'gallery' | 'config' | 'guide' #}
+<aside class="sidebar">
+  <div class="sidebar-brand">wahhid</div>
+
+  <nav class="sidebar-nav">
+    <a href="{{ url_for('admin.dashboard') }}" class="nav-link {{ 'active' if active == 'dashboard' else '' }}">
+      <i class="ti ti-layout-dashboard" aria-hidden="true"></i>dashboard
+    </a>
+    <a href="{{ url_for('admin.articles_list') }}" class="nav-link {{ 'active' if active == 'articles' else '' }}">
+      <i class="ti ti-file-text" aria-hidden="true"></i>maqolalar
+    </a>
+    <a href="{{ url_for('admin.feedback_list') }}" class="nav-link {{ 'active' if active == 'feedback' else '' }}">
+      <i class="ti ti-message-2" aria-hidden="true"></i>feedback
+      {% if new_count is defined and new_count > 0 %}
+      <span class="nav-count">{{ new_count }}</span>
+      {% endif %}
+    </a>
+    <a href="{{ url_for('admin.gallery') }}" class="nav-link {{ 'active' if active == 'gallery' else '' }}">
+      <i class="ti ti-photo" aria-hidden="true"></i>galereya
+    </a>
+    <a href="{{ url_for('admin.config_page') }}" class="nav-link {{ 'active' if active == 'config' else '' }}">
+      <i class="ti ti-settings" aria-hidden="true"></i>sozlamalar
+    </a>
+    <a href="{{ url_for('admin.guide') }}" class="nav-link {{ 'active' if active == 'guide' else '' }}">
+      <i class="ti ti-help-circle" aria-hidden="true"></i>qo'llanma
+    </a>
+  </nav>
+
+  <div class="sidebar-foot">
+    <form method="POST" action="{{ url_for('admin.logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn-logout">
+        <i class="ti ti-logout-2" aria-hidden="true"></i>chiqish
+      </button>
+    </form>
+  </div>
+</aside>
+
+<nav class="mobile-nav">
+  <a href="{{ url_for('admin.dashboard') }}" class="{{ 'active' if active == 'dashboard' else '' }}">dashboard</a>
+  <a href="{{ url_for('admin.articles_list') }}" class="{{ 'active' if active == 'articles' else '' }}">maqolalar</a>
+  <a href="{{ url_for('admin.feedback_list') }}" class="{{ 'active' if active == 'feedback' else '' }}">feedback</a>
+  <a href="{{ url_for('admin.gallery') }}" class="{{ 'active' if active == 'gallery' else '' }}">galereya</a>
+  <a href="{{ url_for('admin.config_page') }}" class="{{ 'active' if active == 'config' else '' }}">sozlamalar</a>
+  <a href="{{ url_for('admin.guide') }}" class="{{ 'active' if active == 'guide' else '' }}">qo'llanma</a>
+</nav>

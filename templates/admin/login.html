@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <title>Admin — Kirish</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="#">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-title">Tizimga kirish</div>
+      <div class="login-sub">wahhid/admin panel</div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for cat, msg in messages %}
+            <div class="admin-alert admin-alert--{{ cat }}">{{ msg }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="post" action="{{ url_for('admin.login') }}" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="field">
+          <label for="username">Foydalanuvchi nomi</label>
+          <input type="text" id="username" name="username"
+                 placeholder="username" autocomplete="off" autofocus
+                 spellcheck="false" maxlength="100">
+        </div>
+
+        <div class="field">
+          <label for="password">Parol</label>
+          <div style="position:relative">
+            <input type="password" id="password" name="password"
+                   placeholder="••••••••••••" maxlength="200" style="padding-right:40px">
+            <button type="button" onclick="togglePw()" title="Ko'rsatish/yashirish"
+                    style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted)">
+              <i class="ti ti-eye" id="eye-icon" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">
+          <i class="ti ti-login-2" aria-hidden="true"></i>kirish
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function togglePw() {
+      const inp = document.getElementById('password');
+      const icon = document.getElementById('eye-icon');
+      const show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      icon.className = show ? 'ti ti-eye-off' : 'ti ti-eye';
+    }
+  </script>
+</body>
+</html>

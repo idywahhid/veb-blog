@@ -1,0 +1,33 @@
+{% extends "admin/base.html" %}
+{% block title %}Qo'llanma{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="page-title">Qo'llanma</div>
+    <div class="page-subtitle">Admin panel bo'limlari haqida qisqacha</div>
+  </div>
+</div>
+
+<div class="row-list">
+  <div class="card">
+    <div class="row-title mb-1"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Dashboard</div>
+    <div class="row-meta">Umumiy statistika — maqolalar, ko'rishlar va yangi feedback'lar bir qarashda.</div>
+  </div>
+  <div class="card">
+    <div class="row-title mb-1"><i class="ti ti-file-text" aria-hidden="true"></i> Maqolalar</div>
+    <div class="row-meta">Qidiruv va filtr, yangi maqola yozish, tahrirlash, nusxalash va o'chirish.</div>
+  </div>
+  <div class="card">
+    <div class="row-title mb-1"><i class="ti ti-message-2" aria-hidden="true"></i> Feedback</div>
+    <div class="row-meta">Sayt bo'yicha fikr-mulohazalarni ko'rish va sahifa sozlamalarini boshqarish.</div>
+  </div>
+  <div class="card">
+    <div class="row-title mb-1"><i class="ti ti-photo" aria-hidden="true"></i> Galereya</div>
+    <div class="row-meta">Rasmlar albomi va ishlatilmayotgan (orphan) rasmlarni tozalash.</div>
+  </div>
+  <div class="card">
+    <div class="row-title mb-1"><i class="ti ti-settings" aria-hidden="true"></i> Sozlamalar</div>
+    <div class="row-meta">Xavfsizlik (parol), aloqa email'lari, 404 statistikasi va zaxira nusxa (backup).</div>
+  </div>
+</div>
+{% endblock %}
