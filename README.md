@@ -1,3 +1,5 @@
+[🇺🇿 O'zbekcha](README.md) | [🇬🇧 English](README.en.md) | [🇷🇺 Русский](README.ru.md)
+
 # wahhid — shaxsiy blog
 
 Flask asosida qurilgan, terminal/kod estetikasidagi shaxsiy blog va kundalik platformasi. Qorong'i tungi tema, `$` prompt uslubi va to'liq funksional admin panel bilan.
@@ -121,6 +123,6 @@ Barcha o'zgaruvchilar `.env.example` faylida namuna bilan ko'rsatilgan.
 └── requirements.txt        # Python kutubxonalari
 ```
 
-## Litsenziya
+## Litsenziya va huquq
 
-Shaxsiy loyiha.
+Shaxsiy loyiha. O'zingizga mos qilib o'zgartirishingiz mumkin.
